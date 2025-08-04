@@ -1,0 +1,212 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Online Appointment Booking</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <style>
+	* {
+	  box-sizing: border-box;
+	  margin: 0;
+	  padding: 0;
+	}
+
+	body {
+	  font-family: 'Segoe UI', sans-serif;
+	  background: #f0f2f5;
+	  color: #333;
+	  padding: 20px;
+	}
+
+	.container {
+	  max-width: 600px;
+	  margin: auto;
+	  background: #fff;
+	  padding: 30px;
+	  border-radius: 8px;
+	  box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+	}
+
+	h1, h2 {
+	  text-align: center;
+	  margin-bottom: 20px;
+	}
+
+	form {
+	  display: flex;
+	  flex-direction: column;
+	  gap: 15px;
+	}
+
+	input, button {
+	  padding: 12px;
+	  font-size: 16px;
+	  border-radius: 5px;
+	  border: 1px solid #ccc;
+	}
+
+	button {
+	  background-color: #28a745;
+	  color: #fff;
+	  font-weight: bold;
+	  border: none;
+	  cursor: pointer;
+	}
+
+	button:hover {
+	  background-color: #218838;
+	}
+
+	.appointment {
+	  margin-top: 20px;
+	  padding: 15px;
+	  background: #fafafa;
+	  border-left: 5px solid #007bff;
+	  border-radius: 5px;
+	  box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+	}
+
+	.appointment strong {
+	  display: block;
+	  margin-bottom: 5px;
+	}
+
+	.appointment button {
+	  margin: 5px 5px 0 0;
+	  background-color: #007bff;
+	  color: white;
+	  border: none;
+	  padding: 8px 12px;
+	  border-radius: 4px;
+	  cursor: pointer;
+	}
+
+	.appointment button:last-child {
+	  background-color: #dc3545;
+	}
+
+	.appointment button:hover {
+	  opacity: 0.9;
+	}
+
+  </style>
+</head>
+<body>
+  <div class="container">
+    <h1>Appointment Booking System</h1>
+
+    <form id="appointment-form">
+      <input type="hidden" id="appointment-id">
+      <input type="text" id="name" placeholder="Full Name" required>
+      <input type="email" id="email" placeholder="Email Address" required>
+      <input type="tel" id="phone" placeholder="Phone Number" required>
+      <input type="text" id="service" placeholder="Service Type" required>
+      <input type="datetime-local" id="datetime" required>
+      <button type="submit">Book Appointment</button>
+    </form>
+
+    <h2>Upcoming Appointments</h2>
+    <div id="appointments"></div>
+  </div>
+
+  <script>
+	const apiUrl = "http://localhost:8080/api/appointments";
+
+	const form = document.getElementById("appointment-form");
+	form.addEventListener("submit", async (e) => {
+	  e.preventDefault();
+
+	  const id = document.getElementById("appointment-id").value;
+	  const appointment = {
+	    customerName: document.getElementById("name").value,
+	    email: document.getElementById("email").value,
+	    phone: document.getElementById("phone").value,
+	    serviceType: document.getElementById("service").value,
+	    appointmentDateTime: document.getElementById("datetime").value,
+	    status: "Pending"
+	  };
+
+	  try {
+	    const method = id ? "PUT" : "POST";
+	    const url = id ? `${apiUrl}/${id}` : apiUrl;
+
+	    await fetch(url, {
+	      method,
+	      headers: { "Content-Type": "application/json" },
+	      body: JSON.stringify(appointment)
+	    });
+
+	    form.reset();
+	    document.getElementById("appointment-id").value = "";
+	    document.querySelector("button[type='submit']").textContent = "Book Appointment";
+	    loadAppointments();
+	  } catch (error) {
+	    alert("Failed to submit appointment.");
+	  }
+	});
+
+	async function loadAppointments() {
+	  const container = document.getElementById("appointments");
+	  container.innerHTML = "<p>Loading...</p>";
+
+	  try {
+	    const response = await fetch(apiUrl);
+	    const appointments = await response.json();
+
+	    container.innerHTML = appointments.length === 0 ? "<p>No appointments yet.</p>" : "";
+
+	    appointments.forEach(app => {
+	      const div = document.createElement("div");
+	      div.classList.add("appointment");
+	      div.innerHTML = `
+	        <strong>${app.customerName}</strong>
+	        <p>📅 ${app.appointmentDateTime.replace("T", " ")}</p>
+	        <p>📞 ${app.phone}</p>
+	        <p>✉️ ${app.email}</p>
+	        <p>🛠️ ${app.serviceType}</p>
+	        <p><strong>Status:</strong> ${app.status}</p>
+	        <button onclick="editAppointment(${app.id})">Edit</button>
+	        <button onclick="deleteAppointment(${app.id})">Cancel</button>
+	      `;
+	      container.appendChild(div);
+	    });
+	  } catch (error) {
+	    container.innerHTML = "<p>Error loading appointments.</p>";
+	  }
+	}
+
+	async function deleteAppointment(id) {
+	  if (!confirm("Are you sure you want to cancel this appointment?")) return;
+
+	  try {
+	    await fetch(`${apiUrl}/${id}`, { method: "DELETE" });
+	    loadAppointments();
+	  } catch (error) {
+	    alert("Failed to delete appointment.");
+	  }
+	}
+
+	async function editAppointment(id) {
+	  try {
+	    const res = await fetch(`${apiUrl}/${id}`);
+	    const data = await res.json();
+
+	    document.getElementById("appointment-id").value = data.id;
+	    document.getElementById("name").value = data.customerName;
+	    document.getElementById("email").value = data.email;
+	    document.getElementById("phone").value = data.phone;
+	    document.getElementById("service").value = data.serviceType;
+	    document.getElementById("datetime").value = data.appointmentDateTime;
+
+	    document.querySelector("button[type='submit']").textContent = "Update Appointment";
+	  } catch (err) {
+	    alert("Unable to load appointment for editing.");
+	  }
+	}
+
+	// Load appointments on page load
+	loadAppointments();
+
+  </script>
+</body>
+</html>

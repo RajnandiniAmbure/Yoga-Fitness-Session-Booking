@@ -97,6 +97,7 @@ mvn clean install
 
 # Run the Spring Boot application
 mvn spring-boot:run
+```
 ---
 
 ### 🌐 Frontend
@@ -105,6 +106,7 @@ To run the frontend application, you can use Python’s simple HTTP server:
 
 ```bash
 python -m http.server 5500
+```
 ---
 
 ## 📸 Sample UI

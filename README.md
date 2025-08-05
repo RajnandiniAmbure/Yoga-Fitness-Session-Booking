@@ -82,7 +82,7 @@ spring.jpa.show-sql=true
 spring.jpa.properties.hibernate.dialect=org.hibernate.dialect.PostgreSQLDialect
 
 server.port=8082
-
+```
 ---
 
 ## ⚙️ Build and Run

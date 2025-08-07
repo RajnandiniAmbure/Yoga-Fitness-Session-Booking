@@ -1,3 +1,8 @@
+# Group Members Name
+-Rajnandini Ambure(leader)
+-Samruddhi More
+-Arpita Patil
+
 # 🧘‍♀️ Yoga Fitness Session Booking
 
 A professional full-stack web application to book, edit, and manage yoga fitness sessions. This project integrates a responsive frontend with a powerful backend to streamline session scheduling.
